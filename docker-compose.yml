@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hungerblock-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hungerblock
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hungerblock-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: hungerblock-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hungerblock-network
+
+  # Backend service (uncomment when ready)
+  # backend:
+  #   build:
+  #     context: ./packages/backend
+  #     dockerfile: Dockerfile
+  #   container_name: hungerblock-backend
+  #   restart: unless-stopped
+  #   ports:
+  #     - "4000:4000"
+  #   environment:
+  #     DATABASE_URL: postgresql://postgres:password@postgres:5432/hungerblock
+  #     REDIS_URL: redis://redis:6379
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   volumes:
+  #     - ./packages/backend:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - hungerblock-network
+
+  # AI service (uncomment when ready)
+  # ai-service:
+  #   build:
+  #     context: ./packages/ai-service
+  #     dockerfile: Dockerfile
+  #   container_name: hungerblock-ai
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./packages/ai-service:/app
+  #   networks:
+  #     - hungerblock-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  hungerblock-network:
+    driver: bridge

@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  walletAddress   String   @unique
+  role            UserRole @default(DONOR)
+  name            String?
+  email           String?
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  donations       Donation[]
+  requests        Request[]
+  verifications   Verification[]
+
+  @@index([walletAddress])
+  @@index([role])
+  @@map("users")
+}
+
+enum UserRole {
+  DONOR
+  NGO
+  VERIFIER
+  ADMIN
+}
+
+model Donation {
+  id                String         @id @default(cuid())
+  donationId        Int            @unique // On-chain donation ID
+  donor             User           @relation(fields: [donorId], references: [id])
+  donorId           String
+  foodType          String
+  quantity          Int
+  ipfsHash          String
+  expiryTimestamp   DateTime
+  location          String
+  freshnessScore    Int
+  status            DonationStatus @default(ACTIVE)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // On-chain transaction
+  txHash            String?
+  blockNumber       Int?
+  
+  // Matching
+  match             Match?
+  
+  @@index([donorId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("donations")
+}
+
+enum DonationStatus {
+  ACTIVE
+  MATCHED
+  VERIFIED
+  CANCELLED
+}
+
+model Request {
+  id              String        @id @default(cuid())
+  requestId       Int           @unique // On-chain request ID
+  ngo             User          @relation(fields: [ngoId], references: [id])
+  ngoId           String
+  foodType        String
+  quantityNeeded  Int
+  location        String
+  urgencyLevel    Int
+  status          RequestStatus @default(OPEN)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // On-chain transaction
+  txHash          String?
+  blockNumber     Int?
+  
+  // Matching
+  match           Match?
+  
+  @@index([ngoId])
+  @@index([status])
+  @@index([urgencyLevel])
+  @@map("requests")
+}
+
+enum RequestStatus {
+  OPEN
+  MATCHED
+  FULFILLED
+  CANCELLED
+}
+
+model Match {
+  id              String   @id @default(cuid())
+  matchId         Int      @unique // On-chain match ID
+  donation        Donation @relation(fields: [donationId], references: [id])
+  donationId      String   @unique
+  request         Request  @relation(fields: [requestId], references: [id])
+  requestId       String   @unique
+  matchedAt       DateTime @default(now())
+  verified        Boolean  @default(false)
+  
+  verification    Verification?
+  
+  @@index([matchId])
+  @@index([verified])
+  @@map("matches")
+}
+
+model Verification {
+  id          String   @id @default(cuid())
+  match       Match    @relation(fields: [matchId], references: [id])
+  matchId     String   @unique
+  verifier    User     @relation(fields: [verifierId], references: [id])
+  verifierId  String
+  verifiedAt  DateTime @default(now())
+  
+  // Reward details
+  rewardAmount String   // BigInt as string
+  txHash       String
+  blockNumber  Int
+  
+  @@index([verifierId])
+  @@map("verifications")
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  txHash          String          @unique
+  blockNumber     Int
+  from            String
+  to              String
+  type            TransactionType
+  status          TxStatus        @default(PENDING)
+  createdAt       DateTime        @default(now())
+  confirmedAt     DateTime?
+  
+  @@index([txHash])
+  @@index([type])
+  @@index([status])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  DONATION_CREATE
+  REQUEST_CREATE
+  DONATION_MATCH
+  DONATION_VERIFY
+  REWARD_MINT
+  BADGE_MINT
+}
+
+enum TxStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}

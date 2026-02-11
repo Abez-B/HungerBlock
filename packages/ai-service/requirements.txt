@@ -1,0 +1,2 @@
+# Flask CORS support
+flask-cors==4.0.0
