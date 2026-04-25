@@ -11,56 +11,11 @@ const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
 const createDonationSchema = z.object({
-    foodType: z.string(),
-    quantity: z.number().int().positive(),
-    expiryTimestamp: z.number().int(),
-    location: z.string(),
-    freshnessScore: z.number().int().min(0).max(100),
-});
-
-// Simplified endpoint for testing (no auth required)
-const simpleDonationSchema = z.object({
-    foodType: z.string(),
-    quantity: z.number().int().positive(),
-    unit: z.string().optional(),
-    expiryDate: z.string(),
-    location: z.string(),
-    notes: z.string().optional(),
-    imageUrl: z.string().optional(),
-    status: z.string().optional(),
-});
-
-router.post("/simple", async (req, res, next) => {
-    try {
-        const data = simpleDonationSchema.parse({
-            ...req.body,
-            quantity: parseInt(req.body.quantity),
-        });
-
-        // Create donation in database without authentication
-        const donation = await prisma.donation.create({
-            data: {
-                donorId: "default-donor-id", // Placeholder
-                foodType: data.foodType,
-                quantity: data.quantity,
-                ipfsHash: data.imageUrl || "placeholder-hash",
-                expiryTimestamp: new Date(data.expiryDate),
-                location: data.location,
-                freshnessScore: 85, // Default freshness
-                donationId: 0,
-                status: "ACTIVE",
-            },
-        });
-
-        res.status(201).json({
-            success: true,
-            donation,
-            message: "Donation created successfully!",
-        });
-    } catch (error) {
-        console.error("Error creating donation:", error);
-        next(error);
-    }
+  foodType: z.string(),
+  quantity: z.number().int().positive(),
+  expiryTimestamp: z.number().int(),
+  location: z.string(),
+  freshnessScore: z.number().int().min(0).max(100),
 });
 
 /**

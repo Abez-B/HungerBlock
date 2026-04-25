@@ -1,7 +1,11 @@
 import { Server, Socket } from "socket.io";
 import { verify } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "your-secret-key-change-in-production") {
+  throw new Error("JWT_SECRET environment variable must be set to a secure random string");
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 interface AuthenticatedSocket extends Socket {
     userId?: string;

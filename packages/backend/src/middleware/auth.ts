@@ -3,7 +3,11 @@ import { SiweMessage } from "siwe";
 import jwt from "jsonwebtoken";
 import { prisma } from "../index";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "your-secret-key-change-in-production") {
+  throw new Error("JWT_SECRET environment variable must be set to a secure random string");
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export interface AuthRequest extends Request {
     user?: {

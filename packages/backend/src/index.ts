@@ -32,6 +32,13 @@ dotenv.config();
 // Initialize Prisma
 export const prisma = new PrismaClient();
 
+// Validate required environment variables
+const requiredEnvVars = ["DATABASE_URL", "JWT_SECRET"];
+const missing = requiredEnvVars.filter(env => !process.env[env]);
+if (missing.length > 0) {
+  throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+}
+
 // Initialize Redis
 export const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 

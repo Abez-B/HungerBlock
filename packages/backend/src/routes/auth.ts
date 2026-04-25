@@ -37,15 +37,15 @@ router.post("/login", async (req, res, next) => {
             where: { walletAddress: verification.address },
         });
 
-        if (!user) {
-            // Auto-create user with DONOR role
-            user = await prisma.user.create({
-                data: {
-                    walletAddress: verification.address,
-                    role: "DONOR",
-                },
-            });
-        }
+if (!user) {
+  // Auto-create user with DONOR role
+  user = await prisma.user.create({
+    data: {
+      walletAddress: verification.address!,
+      role: "DONOR",
+    },
+  });
+}
 
         // Generate JWT token
         const token = generateToken(user.id, user.walletAddress, user.role);

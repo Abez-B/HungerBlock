@@ -1,2 +1,18 @@
-# Flask CORS support
+# Flask and CORS
+flask==3.0.0
 flask-cors==4.0.0
+
+# Environment
+python-dotenv==1.0.0
+
+# Image processing
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.1.0
+
+# HTTP requests
+requests>=2.31.0
+aiohttp>=3.9.1
+
+# Optional: For advanced image processing
+scikit-image>=0.22.0

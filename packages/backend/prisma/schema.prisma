@@ -34,30 +34,33 @@ enum UserRole {
 }
 
 model Donation {
-  id                String         @id @default(cuid())
-  donationId        Int            @unique // On-chain donation ID
-  donor             User           @relation(fields: [donorId], references: [id])
-  donorId           String
-  foodType          String
-  quantity          Int
-  ipfsHash          String
-  expiryTimestamp   DateTime
-  location          String
-  freshnessScore    Int
-  status            DonationStatus @default(ACTIVE)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
+  id String @id @default(cuid())
+  donationId Int @unique // On-chain donation ID
+  donor User @relation(fields: [donorId], references: [id])
+  donorId String
+  foodType String
+  quantity Int
+  ipfsHash String
+  expiryTimestamp DateTime
+  location String
+  freshnessScore Int
+  status DonationStatus @default(ACTIVE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // On-chain transaction
-  txHash            String?
-  blockNumber       Int?
-  
+  txHash String? @db.VarChar(66)
+  blockNumber Int?
+
   // Matching
-  match             Match?
-  
+  match Match?
+
   @@index([donorId])
   @@index([status])
   @@index([createdAt])
+  @@index([txHash])
+  @@index([donorId, status])
+  @@index([expiryTimestamp, status])
   @@map("donations")
 }
 
@@ -69,28 +72,31 @@ enum DonationStatus {
 }
 
 model Request {
-  id              String        @id @default(cuid())
-  requestId       Int           @unique // On-chain request ID
-  ngo             User          @relation(fields: [ngoId], references: [id])
-  ngoId           String
-  foodType        String
-  quantityNeeded  Int
-  location        String
-  urgencyLevel    Int
-  status          RequestStatus @default(OPEN)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
+  id String @id @default(cuid())
+  requestId Int @unique // On-chain request ID
+  ngo User @relation(fields: [ngoId], references: [id])
+  ngoId String
+  foodType String
+  quantityNeeded Int
+  location String
+  urgencyLevel Int
+  status RequestStatus @default(OPEN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // On-chain transaction
-  txHash          String?
-  blockNumber     Int?
-  
+  txHash String? @db.VarChar(66)
+  blockNumber Int?
+
   // Matching
-  match           Match?
-  
+  match Match?
+
   @@index([ngoId])
   @@index([status])
   @@index([urgencyLevel])
+  @@index([txHash])
+  @@index([status, urgencyLevel])
+  @@index([location, status])
   @@map("requests")
 }
 

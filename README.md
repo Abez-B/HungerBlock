@@ -33,50 +33,50 @@ A decentralized platform connecting food donors with NGOs to redistribute surplu
 
 ```mermaid
 graph TB
-    subgraph Frontend
-        A[Next.js 14 + TypeScript]
-        B[RainbowKit + Wagmi]
-        C[Tailwind CSS + Framer Motion]
-    end
-    
-    subgraph Backend
-        D[Express API]
-        E[Prisma ORM]
-        F[Socket.io]
-        G[PostgreSQL]
-        H[Redis Cache]
-    end
-    
-    subgraph Blockchain
-        I[Smart Contracts]
-        J[Hardhat]
-        K[Polygon Mumbai]
-    end
-    
-    subgraph AI Service
-        L[Flask API]
-        M[MobileNetV2]
-        N[OpenCV]
-    end
-    
-    subgraph Storage
-        O[IPFS/Pinata]
-        P[Metadata]
-    end
-    
-    A --> D
-    A --> I
-    B --> I
-    D --> E
-    D --> F
-    D --> L
-    D --> O
-    E --> G
-    F --> H
-    I --> K
-    L --> M
-    L --> N
-    O --> P
+  subgraph Frontend
+    A[React + Vite + TypeScript]
+    B[RainbowKit + Wagmi]
+    C[Tailwind CSS + Framer Motion]
+  end
+
+  subgraph Backend
+    D[Express API]
+    E[Prisma ORM]
+    F[Socket.io]
+    G[PostgreSQL]
+    H[Redis Cache]
+  end
+
+  subgraph Blockchain
+    I[Smart Contracts]
+    J[Hardhat]
+    K[Sepolia Testnet]
+  end
+
+  subgraph AI Service
+    L[Flask API]
+    M[MobileNetV2]
+    N[OpenCV]
+  end
+
+  subgraph Storage
+    O[IPFS/Pinata]
+    P[Metadata]
+  end
+
+  A --> D
+  A --> I
+  B --> I
+  D --> E
+  D --> F
+  D --> L
+  D --> O
+  E --> G
+  F --> H
+  I --> K
+  L --> M
+  L --> N
+  O --> P
 </mermaid>
 
 ---
@@ -102,7 +102,7 @@ HungerBlock/
 │   │   │   └── websocket/
 │   │   └── prisma/
 │   │
-│   ├── frontend/           # Next.js 14 application
+│ ├── frontend/ # React + Vite application
 │   │   ├── src/
 │   │   │   ├── app/
 │   │   │   ├── components/
@@ -151,26 +151,25 @@ npm install --workspaces
 
 ### 3. Set Up Environment Variables
 
-Create `.env` files in each package (see [setup_credentials.md](docs/setup_credentials.md) for details):
+Create `.env` files in each package:
 
 ```bash
 # packages/contracts/.env
-ALCHEMY_RPC_URL="https://polygon-mumbai.g.alchemy.com/v2/YOUR_API_KEY"
+ALCHEMY_RPC_URL="https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY"
 PRIVATE_KEY="your_wallet_private_key"
-POLYGONSCAN_API_KEY="your_polygonscan_api_key"
+ETHERSCAN_API_KEY="your_etherscan_api_key"
 
 # packages/backend/.env
 DATABASE_URL="postgresql://postgres:password@localhost:5432/hungerblock"
 REDIS_URL="redis://localhost:6379"
-ALCHEMY_RPC_URL="https://polygon-mumbai.g.alchemy.com/v2/YOUR_API_KEY"
-PINATA_API_KEY="your_pinata_key"
-PINATA_API_SECRET="your_pinata_secret"
-JWT_SECRET="your_random_secret"
+ALCHEMY_RPC_URL="https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY"
+JWT_SECRET="your_random_secret_min_32_chars"
+FRONTEND_URL="http://localhost:3000"
 
 # packages/frontend/.env.local
-NEXT_PUBLIC_ALCHEMY_ID="your_alchemy_api_key"
-NEXT_PUBLIC_BACKEND_URL="http://localhost:4000"
-NEXT_PUBLIC_CHAIN_ID="80001"
+VITE_WALLETCONNECT_PROJECT_ID="your_walletconnect_project_id"
+VITE_BACKEND_URL="http://localhost:4000"
+VITE_CONTRACT_ADDRESS="0x..."
 ```
 
 ### 4. Start Docker Services
@@ -249,12 +248,12 @@ npm run coverage
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: React 18 + Vite 5
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Web3**: Ethers.js v6, RainbowKit, Wagmi
 - **Animations**: Framer Motion
-- **State**: React Context + Hooks
+- **State**: React Query + Context
 
 ### Backend
 - **Runtime**: Node.js + Express
@@ -265,10 +264,10 @@ npm run coverage
 - **Blockchain**: Ethers.js
 
 ### Blockchain
-- **Network**: Polygon (Mumbai Testnet)
-- **Language**: Solidity 0.8.19
+- **Network**: Sepolia Testnet
+- **Language**: Solidity 0.8.24
 - **Framework**: Hardhat
-- **Libraries**: OpenZeppelin Contracts
+- **Libraries**: OpenZeppelin Contracts 5.4
 - **Testing**: Chai, Ethers.js
 
 ### AI Service

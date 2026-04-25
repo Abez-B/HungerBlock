@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./RewardToken.sol";
 import "./AchievementBadge.sol";
 
@@ -69,17 +70,19 @@ contract HungerBlock is AccessControl, ReentrancyGuard, Pausable {
         address verifier;
     }
 
-    // State variables
-    uint256 public donationCounter;
-    uint256 public requestCounter;
-    uint256 public matchCounter;
+// State variables
+uint256 public donationCounter;
+uint256 public requestCounter;
+uint256 public matchCounter;
 
-    mapping(uint256 => Donation) public donations;
-    mapping(uint256 => FoodRequest) public requests;
-    mapping(uint256 => Match) public matches;
-    mapping(address => uint256[]) public donorDonations;
-    mapping(address => uint256[]) public ngoRequests;
-    mapping(address => uint256) public userDonationCount; // For achievement tracking
+mapping(uint256 => Donation) public donations;
+mapping(uint256 => FoodRequest) public requests;
+mapping(uint256 => Match) public matches;
+mapping(address => uint256[]) public donorDonations;
+mapping(address => uint256[]) public ngoRequests;
+mapping(address => uint256) public userDonationCount;
+mapping(uint256 => uint256) public matchByDonation;
+mapping(uint256 => uint256) public matchByRequest;
 
     // Reward configuration
     uint256 public rewardPerServing = 10 * 10**18; // 10 tokens per serving
@@ -242,69 +245,62 @@ contract HungerBlock is AccessControl, ReentrancyGuard, Pausable {
         request.status = RequestStatus.Matched;
         request.matchedDonationId = _donationId;
 
-        matchCounter++;
-        uint256 matchId = matchCounter;
+matchCounter++;
+uint256 matchId = matchCounter;
 
-        matches[matchId] = Match({
-            donationId: _donationId,
-            requestId: _requestId,
-            matchedAt: block.timestamp,
-            verified: false,
-            verifiedAt: 0,
-            verifier: address(0)
-        });
+matches[matchId] = Match({
+  donationId: _donationId,
+  requestId: _requestId,
+  matchedAt: block.timestamp,
+  verified: false,
+  verifiedAt: 0,
+  verifier: address(0)
+});
 
-        emit DonationMatched(_donationId, _requestId, matchId);
+matchByDonation[_donationId] = matchId;
+matchByRequest[_requestId] = matchId;
 
-        return matchId;
+emit DonationMatched(_donationId, _requestId, matchId);
+
+return matchId;
     }
 
     /**
      * @dev Verify a donation delivery (Verifiers only)
      * @param _donationId ID of the donation to verify
      */
-    function verifyDonation(uint256 _donationId)
-        external
-        onlyRole(VERIFIER_ROLE)
-        whenNotPaused
-        nonReentrant
-    {
-        Donation storage donation = donations[_donationId];
-        require(donation.status == DonationStatus.Matched, "Donation not matched");
+function verifyDonation(uint256 _donationId)
+  external
+  onlyRole(VERIFIER_ROLE)
+  whenNotPaused
+  nonReentrant
+{
+  Donation storage donation = donations[_donationId];
+  require(donation.status == DonationStatus.Matched, "Donation not matched");
 
-        uint256 requestId = donation.matchedRequestId;
-        FoodRequest storage request = requests[requestId];
+  uint256 requestId = donation.matchedRequestId;
+  FoodRequest storage request = requests[requestId];
 
-        // Update statuses
-        donation.status = DonationStatus.Verified;
-        request.status = RequestStatus.Fulfilled;
+  donation.status = DonationStatus.Verified;
+  request.status = RequestStatus.Fulfilled;
 
-        // Find the match
-        for (uint256 i = 1; i <= matchCounter; i++) {
-            if (
-                matches[i].donationId == _donationId &&
-                matches[i].requestId == requestId &&
-                !matches[i].verified
-            ) {
-                matches[i].verified = true;
-                matches[i].verifiedAt = block.timestamp;
-                matches[i].verifier = msg.sender;
-                break;
-            }
-        }
+  uint256 matchId = matchByDonation[_donationId];
+  require(matchId > 0, "Match not found");
+  
+  Match storage matchData = matches[matchId];
+  matchData.verified = true;
+  matchData.verifiedAt = block.timestamp;
+  matchData.verifier = msg.sender;
 
-        // Calculate and distribute rewards
-        uint256 rewardAmount = calculateReward(donation);
-        rewardToken.mint(donation.donor, rewardAmount);
+  uint256 rewardAmount = calculateReward(donation);
+  rewardToken.mint(donation.donor, rewardAmount);
 
-        // Update donation count for achievements
-        userDonationCount[donation.donor]++;
+  userDonationCount[donation.donor]++;
 
-        // Check for achievement milestones
-        _checkAndMintAchievements(donation.donor);
+  _checkAndMintAchievements(donation.donor);
 
-        emit DonationVerified(_donationId, msg.sender, rewardAmount);
-    }
+  emit DonationVerified(_donationId, msg.sender, rewardAmount);
+}
 
     /**
      * @dev Calculate reward based on quantity and freshness
@@ -422,7 +418,24 @@ contract HungerBlock is AccessControl, ReentrancyGuard, Pausable {
         _pause();
     }
 
-    function unpause() external onlyRole(ADMIN_ROLE) {
-        _unpause();
-    }
+function unpause() external onlyRole(ADMIN_ROLE) {
+  _unpause();
+}
+
+function emergencyWithdraw(address token, uint256 amount) external onlyRole(ADMIN_ROLE) {
+  if (token == address(0)) {
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success, "Transfer failed");
+  } else {
+    IERC20(token).transfer(msg.sender, amount);
+  }
+}
+
+function getMatchIdByDonation(uint256 _donationId) external view returns (uint256) {
+  return matchByDonation[_donationId];
+}
+
+function getMatchIdByRequest(uint256 _requestId) external view returns (uint256) {
+  return matchByRequest[_requestId];
+}
 }
