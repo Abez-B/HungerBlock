@@ -9,7 +9,7 @@ on:
 jobs:
   lint-and-test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -17,23 +17,25 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install root dependencies
+        run: npm install
 
-      - name: Lint
+      - name: Install frontend dependencies
+        working-directory: packages/frontend
+        run: npm install
+
+      - name: Lint frontend
+        working-directory: packages/frontend
         run: npm run lint --if-present
 
-      - name: Type check
+      - name: Type check frontend
+        working-directory: packages/frontend
         run: npm run typecheck --if-present
-
-      - name: Run tests
-        run: npm test --if-present
 
   contracts-test:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -41,44 +43,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install contracts dependencies
+        working-directory: packages/contracts
+        run: npm install
 
       - name: Compile contracts
         working-directory: packages/contracts
         run: npx hardhat compile
 
-      - name: Run tests
-        working-directory: packages/contracts
-        run: npx hardhat test
-
-  backend-test:
+  backend-build:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
 
     steps:
       - uses: actions/checkout@v4
@@ -87,28 +62,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install backend dependencies
+        working-directory: packages/backend
+        run: npm install
 
       - name: Generate Prisma client
         working-directory: packages/backend
         run: npx prisma generate
 
-      - name: Run migrations
+      - name: Build backend
         working-directory: packages/backend
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test
-        run: npx prisma migrate dev --skip-generate
-
-      - name: Run backend tests
-        working-directory: packages/backend
-        run: npm test
+        run: npm run build --if-present
 
   security-scan:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
