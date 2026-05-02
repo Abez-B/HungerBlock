@@ -27,7 +27,7 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "prepare": "husky install"
+    "prepare": "node -e \"if (!process.env.CI) { require('child_process').execSync('husky install', {stdio: 'inherit'}) }\""
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
