@@ -198,3 +198,138 @@ export const USER_STATS = {
   tokensEarned: 320,
   achievementBadges: 3,
 };
+
+export type TxStatus = 'Confirmed' | 'Pending' | 'Failed';
+export type TxType = 'Donation' | 'Request' | 'Token Reward' | 'Verification';
+
+export interface ChainTransaction {
+  id: string;
+  txHash: string;
+  blockNumber: number;
+  type: TxType;
+  status: TxStatus;
+  foodType: string;
+  quantity: string;
+  from: string;
+  to: string;
+  gasUsed: string;
+  hbkTokens: number;
+  timestamp: string;
+  network: 'Ethereum' | 'Polygon';
+  confirmations: number;
+}
+
+export const TRANSACTIONS: ChainTransaction[] = [
+  {
+    id: '1',
+    txHash: '0x4e3a8f2c1b9d7e6a5f0c8b3d2e1a9f7c4b5d8e2a',
+    blockNumber: 19847562,
+    type: 'Donation',
+    status: 'Confirmed',
+    foodType: 'Rice & Dal',
+    quantity: '200 servings',
+    from: '0x1a2b3c4d...9c0d',
+    to: 'HungerBlock Contract',
+    gasUsed: '0.0023 ETH',
+    hbkTokens: 40,
+    timestamp: '2026-05-02T08:05:12Z',
+    network: 'Ethereum',
+    confirmations: 142,
+  },
+  {
+    id: '2',
+    txHash: '0xb7c2d4e8f1a3b5c9d0e2f4a6b8c0d2e4f6a8b0c2',
+    blockNumber: 19847491,
+    type: 'Token Reward',
+    status: 'Confirmed',
+    foodType: 'Pasta & Salad',
+    quantity: '80 portions',
+    from: 'RewardToken Contract',
+    to: '0x1a2b3c4d...9c0d',
+    gasUsed: '0.0011 ETH',
+    hbkTokens: 35,
+    timestamp: '2026-05-02T07:42:30Z',
+    network: 'Ethereum',
+    confirmations: 198,
+  },
+  {
+    id: '3',
+    txHash: '0x9a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b',
+    blockNumber: 48291034,
+    type: 'Verification',
+    status: 'Confirmed',
+    foodType: 'Fresh Vegetables',
+    quantity: '50 kg',
+    from: 'AI Oracle',
+    to: 'HungerBlock Contract',
+    gasUsed: '0.0008 MATIC',
+    hbkTokens: 0,
+    timestamp: '2026-05-01T14:11:05Z',
+    network: 'Polygon',
+    confirmations: 512,
+  },
+  {
+    id: '4',
+    txHash: '0xd4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3',
+    blockNumber: 19847210,
+    type: 'Donation',
+    status: 'Confirmed',
+    foodType: 'Bread & Pastries',
+    quantity: '150 pieces',
+    from: '0x1a2b3c4d...9c0d',
+    to: 'HungerBlock Contract',
+    gasUsed: '0.0019 ETH',
+    hbkTokens: 55,
+    timestamp: '2026-05-01T18:03:44Z',
+    network: 'Ethereum',
+    confirmations: 380,
+  },
+  {
+    id: '5',
+    txHash: '0xf1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0',
+    blockNumber: 48290812,
+    type: 'Token Reward',
+    status: 'Pending',
+    foodType: 'Biryani',
+    quantity: '120 servings',
+    from: 'RewardToken Contract',
+    to: '0x1a2b3c4d...9c0d',
+    gasUsed: '—',
+    hbkTokens: 48,
+    timestamp: '2026-05-02T11:08:22Z',
+    network: 'Polygon',
+    confirmations: 3,
+  },
+  {
+    id: '6',
+    txHash: '0xa0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9',
+    blockNumber: 19846980,
+    type: 'Donation',
+    status: 'Confirmed',
+    foodType: 'Fresh Fruits',
+    quantity: '30 kg',
+    from: '0x1a2b3c4d...9c0d',
+    to: 'HungerBlock Contract',
+    gasUsed: '0.0021 ETH',
+    hbkTokens: 60,
+    timestamp: '2026-05-02T10:33:15Z',
+    network: 'Ethereum',
+    confirmations: 210,
+  },
+  {
+    id: '7',
+    txHash: '0x3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d',
+    blockNumber: 48290600,
+    type: 'Request',
+    status: 'Failed',
+    foodType: 'Cooked Meals',
+    quantity: '300 servings',
+    from: '0xaaaa...1111',
+    to: 'HungerBlock Contract',
+    gasUsed: '0.0005 MATIC',
+    hbkTokens: 0,
+    timestamp: '2026-05-01T09:22:10Z',
+    network: 'Polygon',
+    confirmations: 0,
+  },
+];

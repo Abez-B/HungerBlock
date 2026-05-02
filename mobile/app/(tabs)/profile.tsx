@@ -5,6 +5,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -168,6 +169,26 @@ export default function ProfileScreen() {
             />
           </View>
 
+          {/* Transaction History */}
+          <TouchableOpacity
+            style={[styles.settingRow, { borderBottomColor: colors.border, borderBottomWidth: 1 }]}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/history'); }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.settingLeft}>
+              <View style={[styles.settingIconBox, { backgroundColor: colors.primary + '18' }]}>
+                <Ionicons name="cube-outline" size={16} color={colors.primary} />
+              </View>
+              <Text style={[styles.settingLabel, { color: colors.foreground }]}>Transaction History</Text>
+            </View>
+            <View style={styles.settingRight}>
+              <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.newBadgeText}>ON-CHAIN</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+            </View>
+          </TouchableOpacity>
+
           {[
             { icon: 'shield-outline' as const, label: 'Privacy Policy' },
             { icon: 'document-text-outline' as const, label: 'Terms of Service' },
@@ -231,4 +252,7 @@ const styles = StyleSheet.create({
   settingIconBox: { width: 30, height: 30, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   settingLabel: { fontSize: 15, fontFamily: 'DMSans_400Regular' },
   version: { textAlign: 'center', fontSize: 12, marginTop: 24, fontFamily: 'DMSans_400Regular' },
+  settingRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  newBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 },
+  newBadgeText: { fontSize: 9, fontFamily: 'DMSans_700Bold', color: '#fff', letterSpacing: 0.5 },
 });

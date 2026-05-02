@@ -30,6 +30,7 @@ function AppShell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="donate" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="request" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="history" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
     </>
