@@ -1,0 +1,24 @@
+name: Verify GitHub Sync
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  verify-sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Confirm sync arrived
+        run: |
+          echo "GitHub received push to ${{ github.ref_name }} from Replit."
+          echo "Commit: ${{ github.sha }}"
+          echo "Pushed by: ${{ github.actor }}"
+          echo "Sync verified successfully."
