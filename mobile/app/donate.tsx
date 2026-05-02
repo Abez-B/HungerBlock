@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform,
-  KeyboardAvoidingView,
+  KeyboardAvoidingView, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 
-const STEPS = ['Photo', 'Details', 'Review'];
+const STEPS = ['Select', 'Details', 'Review'];
 const FOOD_TYPES = ['Cooked Meals', 'Rice & Grains', 'Vegetables', 'Fruits', 'Bakery', 'Dairy', 'Other'];
 const UNITS = ['servings', 'kg', 'pieces', 'boxes', 'plates', 'liters'];
 
@@ -18,261 +18,178 @@ export default function DonateScreen() {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    foodType: '',
-    quantity: '',
-    unit: 'servings',
-    location: '',
-    expiryDate: '',
-    notes: '',
-  });
+  const [form, setForm] = useState({ foodType: '', quantity: '', unit: 'servings', location: '', expiryDate: '', notes: '' });
 
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
   const bottomInset = Platform.OS === 'web' ? 34 : insets.bottom;
-
   const isStep1Valid = form.foodType && form.quantity && form.location && form.expiryDate;
 
   const handleSubmit = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      router.back();
-    }, 1500);
+    setTimeout(() => { setSubmitting(false); router.back(); }, 1500);
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
-        <View style={[styles.header, { paddingTop: topInset + 12, borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { paddingTop: topInset + 12, borderBottomColor: colors.border, backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.7}>
-            <Ionicons name="close" size={22} color={colors.foreground} />
+            <Ionicons name="close" size={20} color={colors.foreground} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Donate Food</Text>
+          <View style={styles.headerCenter}>
+            <View style={styles.logoMini}>
+              <Image source={require('@/assets/images/icon.png')} style={styles.logoMiniImg} resizeMode="cover" />
+            </View>
+            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Donate Food</Text>
+          </View>
           <View style={{ width: 40 }} />
         </View>
 
-        {/* Progress */}
-        <View style={styles.progress}>
+        {/* Steps */}
+        <View style={styles.stepsRow}>
           {STEPS.map((s, i) => (
             <View key={s} style={styles.stepItem}>
-              <View style={[styles.stepCircle, {
-                backgroundColor: i <= step ? colors.primary : colors.muted,
-              }]}>
-                {i < step ? (
-                  <Ionicons name="checkmark" size={14} color="#fff" />
-                ) : (
-                  <Text style={[styles.stepNum, { color: i <= step ? '#fff' : colors.mutedForeground }]}>
-                    {i + 1}
-                  </Text>
-                )}
+              <View style={[styles.stepCircle, { backgroundColor: i <= step ? colors.primary : colors.muted }]}>
+                {i < step
+                  ? <Ionicons name="checkmark" size={13} color="#fff" />
+                  : <Text style={[styles.stepNum, { color: i <= step ? '#fff' : colors.mutedForeground }]}>{i + 1}</Text>
+                }
               </View>
-              <Text style={[styles.stepLabel, {
-                color: i <= step ? colors.primary : colors.mutedForeground,
-                fontWeight: i === step ? '600' : '400',
-              }]}>{s}</Text>
-              {i < STEPS.length - 1 && (
-                <View style={[styles.stepLine, { backgroundColor: i < step ? colors.primary : colors.border }]} />
-              )}
+              <Text style={[styles.stepLabel, { color: i <= step ? colors.primary : colors.mutedForeground, fontFamily: i === step ? 'DMSans_700Bold' : 'DMSans_400Regular' }]}>{s}</Text>
+              {i < STEPS.length - 1 && <View style={[styles.stepLine, { backgroundColor: i < step ? colors.primary : colors.border }]} />}
             </View>
           ))}
         </View>
 
-        <ScrollView
-          style={styles.body}
-          contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Step 0: Photo (simulated) */}
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {/* Step 0 */}
           {step === 0 && (
-            <View style={styles.stepContent}>
+            <View style={{ gap: 16 }}>
               <TouchableOpacity
-                style={[styles.photoUpload, { borderColor: colors.border, backgroundColor: colors.card }]}
+                style={[styles.photoZone, { borderColor: colors.border, backgroundColor: colors.card }]}
                 activeOpacity={0.8}
-                onPress={() => Haptics.selectionAsync()}
               >
-                <View style={[styles.photoIcon, { backgroundColor: colors.accent }]}>
-                  <Ionicons name="camera" size={32} color={colors.primary} />
+                <View style={[styles.photoIconBox, { backgroundColor: colors.accent }]}>
+                  <Ionicons name="camera" size={30} color={colors.primary} />
                 </View>
-                <Text style={[styles.photoTitle, { color: colors.foreground }]}>Upload Food Photo</Text>
-                <Text style={[styles.photoSub, { color: colors.mutedForeground }]}>
-                  Our AI will verify freshness and detect food type
-                </Text>
-                <View style={[styles.aiTag, { backgroundColor: colors.primary + '18' }]}>
-                  <Ionicons name="flash" size={12} color={colors.primary} />
-                  <Text style={[styles.aiTagText, { color: colors.primary }]}>AI-Powered Analysis</Text>
+                <Text style={[styles.photoTitle, { color: colors.foreground }]}>Add Food Photo</Text>
+                <Text style={[styles.photoSub, { color: colors.mutedForeground }]}>AI verifies freshness & detects food type automatically</Text>
+                <View style={[styles.aiBadge, { backgroundColor: colors.primary + '18' }]}>
+                  <Ionicons name="flash" size={11} color={colors.primary} />
+                  <Text style={[styles.aiBadgeText, { color: colors.primary }]}>AI-Powered Verification</Text>
                 </View>
               </TouchableOpacity>
 
-              <Text style={[styles.orText, { color: colors.mutedForeground }]}>OR SELECT FOOD TYPE</Text>
-
-              <View style={styles.foodTypeGrid}>
+              <Text style={[styles.orLabel, { color: colors.mutedForeground }]}>OR CHOOSE FOOD TYPE</Text>
+              <View style={styles.typeGrid}>
                 {FOOD_TYPES.map(ft => (
                   <TouchableOpacity
                     key={ft}
-                    style={[styles.foodTypeChip, {
+                    style={[styles.typeChip, {
                       backgroundColor: form.foodType === ft ? colors.primary : colors.card,
                       borderColor: form.foodType === ft ? colors.primary : colors.border,
                     }]}
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setForm(f => ({ ...f, foodType: ft }));
-                    }}
+                    onPress={() => { Haptics.selectionAsync(); setForm(f => ({ ...f, foodType: ft })); }}
                     activeOpacity={0.8}
                   >
-                    <Text style={[styles.foodTypeText, {
-                      color: form.foodType === ft ? '#fff' : colors.foreground,
-                    }]}>{ft}</Text>
+                    <Text style={[styles.typeChipText, { color: form.foodType === ft ? '#fff' : colors.foreground }]}>{ft}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
           )}
 
-          {/* Step 1: Details */}
+          {/* Step 1 */}
           {step === 1 && (
-            <View style={styles.stepContent}>
-              <View style={[styles.inputGroup, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={[styles.inputRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>Food Type</Text>
-                  <TextInput
-                    style={[styles.input, { color: colors.foreground }]}
-                    value={form.foodType}
-                    onChangeText={v => setForm(f => ({ ...f, foodType: v }))}
-                    placeholder="e.g. Rice & Dal"
-                    placeholderTextColor={colors.mutedForeground}
-                  />
+            <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {[
+                { key: 'foodType', label: 'Food Type', placeholder: 'e.g. Rice & Dal', keyboard: 'default' },
+                { key: 'quantity', label: 'Quantity', placeholder: 'e.g. 50', keyboard: 'numeric' },
+                { key: 'location', label: 'Pickup Location', placeholder: 'Full address', keyboard: 'default' },
+                { key: 'expiryDate', label: 'Expiry Date', placeholder: 'YYYY-MM-DD', keyboard: 'default' },
+                { key: 'notes', label: 'Notes (optional)', placeholder: 'Any special instructions…', keyboard: 'default' },
+              ].map((field, i) => (
+                <View key={field.key} style={[styles.fieldRow, { borderBottomColor: colors.border, borderBottomWidth: i < 4 ? 1 : 0 }]}>
+                  {field.key === 'unit'
+                    ? null
+                    : <>
+                        <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{field.label}</Text>
+                        <TextInput
+                          style={[styles.fieldInput, { color: colors.foreground }]}
+                          value={(form as any)[field.key]}
+                          onChangeText={v => setForm(f => ({ ...f, [field.key]: v }))}
+                          placeholder={field.placeholder}
+                          placeholderTextColor={colors.mutedForeground}
+                          keyboardType={field.keyboard as any}
+                          multiline={field.key === 'notes'}
+                        />
+                      </>
+                  }
                 </View>
-                <View style={[styles.inputRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>Quantity</Text>
-                  <TextInput
-                    style={[styles.input, { color: colors.foreground }]}
-                    value={form.quantity}
-                    onChangeText={v => setForm(f => ({ ...f, quantity: v }))}
-                    placeholder="e.g. 50"
-                    placeholderTextColor={colors.mutedForeground}
-                    keyboardType="numeric"
-                  />
-                </View>
-                <View style={[styles.inputRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>Unit</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.unitScroll}>
-                    {UNITS.map(u => (
-                      <TouchableOpacity
-                        key={u}
-                        style={[styles.unitChip, {
-                          backgroundColor: form.unit === u ? colors.primary : colors.muted,
-                        }]}
-                        onPress={() => setForm(f => ({ ...f, unit: u }))}
-                      >
-                        <Text style={[styles.unitText, { color: form.unit === u ? '#fff' : colors.mutedForeground }]}>
-                          {u}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-                <View style={[styles.inputRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>Location</Text>
-                  <TextInput
-                    style={[styles.input, { color: colors.foreground }]}
-                    value={form.location}
-                    onChangeText={v => setForm(f => ({ ...f, location: v }))}
-                    placeholder="Pickup address"
-                    placeholderTextColor={colors.mutedForeground}
-                  />
-                </View>
-                <View style={[styles.inputRow, { borderBottomColor: colors.border }]}>
-                  <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>Expiry Date</Text>
-                  <TextInput
-                    style={[styles.input, { color: colors.foreground }]}
-                    value={form.expiryDate}
-                    onChangeText={v => setForm(f => ({ ...f, expiryDate: v }))}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.mutedForeground}
-                  />
-                </View>
-                <View style={styles.inputRow}>
-                  <Text style={[styles.inputLabel, { color: colors.mutedForeground }]}>Notes</Text>
-                  <TextInput
-                    style={[styles.input, { color: colors.foreground }]}
-                    value={form.notes}
-                    onChangeText={v => setForm(f => ({ ...f, notes: v }))}
-                    placeholder="Optional details..."
-                    placeholderTextColor={colors.mutedForeground}
-                    multiline
-                    numberOfLines={2}
-                  />
-                </View>
+              ))}
+              {/* Unit picker */}
+              <View style={styles.fieldRow}>
+                <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Unit</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }}>
+                  {UNITS.map(u => (
+                    <TouchableOpacity
+                      key={u}
+                      style={[styles.unitChip, { backgroundColor: form.unit === u ? colors.primary : colors.muted, marginRight: 6 }]}
+                      onPress={() => setForm(f => ({ ...f, unit: u }))}
+                    >
+                      <Text style={[styles.unitChipText, { color: form.unit === u ? '#fff' : colors.mutedForeground }]}>{u}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             </View>
           )}
 
-          {/* Step 2: Review */}
+          {/* Step 2 */}
           {step === 2 && (
-            <View style={styles.stepContent}>
+            <View style={{ gap: 14 }}>
               <View style={[styles.reviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.reviewTitle, { color: colors.foreground }]}>Donation Summary</Text>
-
                 {[
                   { label: 'Food Type', value: form.foodType || 'Not specified' },
                   { label: 'Quantity', value: `${form.quantity} ${form.unit}` },
                   { label: 'Location', value: form.location || 'Not specified' },
-                  { label: 'Expiry Date', value: form.expiryDate || 'Not specified' },
-                ].map((item, i) => (
-                  <View key={item.label} style={[styles.reviewRow, i < 3 ? { borderBottomColor: colors.border, borderBottomWidth: 1 } : {}]}>
-                    <Text style={[styles.reviewLabel, { color: colors.mutedForeground }]}>{item.label}</Text>
-                    <Text style={[styles.reviewValue, { color: colors.foreground }]}>{item.value}</Text>
+                  { label: 'Expiry', value: form.expiryDate || 'Not specified' },
+                ].map((row, i) => (
+                  <View key={row.label} style={[styles.reviewRow, { borderBottomColor: colors.border, borderBottomWidth: i < 3 ? 1 : 0 }]}>
+                    <Text style={[styles.reviewLabel, { color: colors.mutedForeground }]}>{row.label}</Text>
+                    <Text style={[styles.reviewValue, { color: colors.foreground }]}>{row.value}</Text>
                   </View>
                 ))}
               </View>
 
-              <View style={[styles.blockchainInfo, { backgroundColor: colors.accent, borderColor: colors.primary + '30' }]}>
-                <Ionicons name="shield-checkmark" size={20} color={colors.primary} />
+              <View style={[styles.infoBox, { backgroundColor: colors.accent, borderColor: colors.primary + '30' }]}>
+                <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.blockchainTitle, { color: colors.primary }]}>On-Chain Recording</Text>
-                  <Text style={[styles.blockchainText, { color: colors.mutedForeground }]}>
-                    This donation will be recorded on the Ethereum blockchain for full transparency.
-                  </Text>
+                  <Text style={[styles.infoTitle, { color: colors.primary }]}>Recorded On-Chain</Text>
+                  <Text style={[styles.infoText, { color: colors.mutedForeground }]}>This donation is permanently verified on the Ethereum blockchain.</Text>
                 </View>
               </View>
 
-              <View style={[styles.rewardInfo, { backgroundColor: '#D97706' + '18', borderColor: '#D97706' + '40' }]}>
-                <Ionicons name="logo-bitcoin" size={20} color="#D97706" />
-                <Text style={[styles.rewardText, { color: '#D97706' }]}>
-                  Earn ~40 HBK tokens for this donation
-                </Text>
+              <View style={[styles.infoBox, { backgroundColor: colors.tokenGold + '14', borderColor: colors.tokenGold + '30' }]}>
+                <Ionicons name="logo-bitcoin" size={18} color={colors.tokenGold} />
+                <Text style={[styles.infoTitle, { color: colors.tokenGold }]}>Earn ~40 HBK Tokens</Text>
               </View>
             </View>
           )}
         </ScrollView>
 
-        {/* Footer Actions */}
-        <View style={[styles.footer, {
-          borderTopColor: colors.border,
-          backgroundColor: colors.background,
-          paddingBottom: bottomInset + 12,
-        }]}>
+        {/* Footer */}
+        <View style={[styles.footer, { borderTopColor: colors.border, backgroundColor: colors.background, paddingBottom: bottomInset + 12 }]}>
           {step > 0 && (
-            <TouchableOpacity
-              style={[styles.backBtn, { borderColor: colors.border }]}
-              onPress={() => { Haptics.selectionAsync(); setStep(s => s - 1); }}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={[styles.backBtn, { borderColor: colors.border }]} onPress={() => { Haptics.selectionAsync(); setStep(s => s - 1); }} activeOpacity={0.8}>
               <Ionicons name="arrow-back" size={20} color={colors.foreground} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
-            style={[styles.nextBtn, {
-              backgroundColor: colors.primary,
-              opacity: (step === 1 && !isStep1Valid) ? 0.5 : 1,
-              flex: 1,
-            }]}
+            style={[styles.nextBtn, { backgroundColor: colors.primary, opacity: step === 1 && !isStep1Valid ? 0.5 : 1, flex: 1 }]}
             onPress={() => {
               if (step < 2) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setStep(s => s + 1); }
               else handleSubmit();
@@ -280,14 +197,8 @@ export default function DonateScreen() {
             disabled={step === 1 && !isStep1Valid}
             activeOpacity={0.85}
           >
-            {submitting ? (
-              <Text style={styles.nextBtnText}>Submitting...</Text>
-            ) : (
-              <>
-                <Text style={styles.nextBtnText}>{step < 2 ? 'Continue' : 'Submit Donation'}</Text>
-                <Ionicons name={step < 2 ? "arrow-forward" : "checkmark"} size={18} color="#fff" />
-              </>
-            )}
+            <Text style={styles.nextBtnText}>{submitting ? 'Submitting…' : step < 2 ? 'Continue' : 'Submit Donation'}</Text>
+            <Ionicons name={step < 2 ? 'arrow-forward' : 'checkmark'} size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -297,245 +208,44 @@ export default function DonateScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-  },
-  closeBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: 'Inter_600SemiBold',
-  },
-  progress: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  stepItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 6,
-  },
-  stepCircle: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepNum: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  stepLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-  },
-  stepLine: {
-    flex: 1,
-    height: 2,
-    borderRadius: 1,
-  },
-  body: { flex: 1 },
-  stepContent: { gap: 16 },
-  photoUpload: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderRadius: 20,
-    padding: 32,
-    alignItems: 'center',
-    gap: 10,
-  },
-  photoIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  photoTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    fontFamily: 'Inter_600SemiBold',
-  },
-  photoSub: {
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 19,
-    fontFamily: 'Inter_400Regular',
-  },
-  aiTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 4,
-  },
-  aiTagText: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-  },
-  orText: {
-    textAlign: 'center',
-    fontSize: 11,
-    letterSpacing: 1.5,
-    fontFamily: 'Inter_500Medium',
-    marginVertical: 4,
-  },
-  foodTypeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  foodTypeChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-  },
-  foodTypeText: {
-    fontSize: 13,
-    fontFamily: 'Inter_500Medium',
-  },
-  inputGroup: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  inputRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 4,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  input: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    paddingVertical: 0,
-  },
-  unitScroll: { marginTop: 6 },
-  unitChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    marginRight: 6,
-  },
-  unitText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-  },
-  reviewCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  reviewTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: 'Inter_600SemiBold',
-    padding: 16,
-    paddingBottom: 12,
-  },
-  reviewRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  reviewLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-  },
-  reviewValue: {
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'Inter_500Medium',
-    maxWidth: '60%',
-    textAlign: 'right',
-  },
-  blockchainInfo: {
-    flexDirection: 'row',
-    gap: 12,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'flex-start',
-  },
-  blockchainTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: 'Inter_600SemiBold',
-    marginBottom: 3,
-  },
-  blockchainText: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    lineHeight: 17,
-  },
-  rewardInfo: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  rewardText: {
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'Inter_500Medium',
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    borderTopWidth: 1,
-  },
-  backBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextBtn: {
-    height: 48,
-    borderRadius: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  nextBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-    fontFamily: 'Inter_600SemiBold',
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
+  closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  logoMini: { width: 26, height: 26, borderRadius: 7, overflow: 'hidden' },
+  logoMiniImg: { width: 26, height: 26 },
+  headerTitle: { fontSize: 16, fontWeight: '700', fontFamily: 'DMSans_700Bold' },
+  stepsRow: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 16, alignItems: 'center' },
+  stepItem: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 6 },
+  stepCircle: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  stepNum: { fontSize: 12, fontFamily: 'DMSans_700Bold' },
+  stepLabel: { fontSize: 12 },
+  stepLine: { flex: 1, height: 2, borderRadius: 1 },
+  photoZone: { borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 18, padding: 28, alignItems: 'center', gap: 10 },
+  photoIconBox: { width: 60, height: 60, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  photoTitle: { fontSize: 16, fontFamily: 'DMSans_700Bold' },
+  photoSub: { fontSize: 13, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 19, maxWidth: 260 },
+  aiBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginTop: 4 },
+  aiBadgeText: { fontSize: 12, fontFamily: 'DMSans_500Medium' },
+  orLabel: { textAlign: 'center', fontSize: 11, letterSpacing: 1.5, fontFamily: 'DMSans_500Medium' },
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  typeChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5 },
+  typeChipText: { fontSize: 13, fontFamily: 'DMSans_500Medium' },
+  formCard: { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  fieldRow: { paddingHorizontal: 16, paddingVertical: 12, gap: 4 },
+  fieldLabel: { fontSize: 11, fontFamily: 'DMSans_500Medium', textTransform: 'uppercase', letterSpacing: 0.5 },
+  fieldInput: { fontSize: 15, fontFamily: 'DMSans_400Regular', paddingVertical: 0 },
+  unitChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 12 },
+  unitChipText: { fontSize: 13, fontFamily: 'DMSans_400Regular' },
+  reviewCard: { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  reviewTitle: { fontSize: 15, fontFamily: 'DMSans_700Bold', padding: 14, paddingBottom: 10 },
+  reviewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 12 },
+  reviewLabel: { fontSize: 14, fontFamily: 'DMSans_400Regular' },
+  reviewValue: { fontSize: 14, fontFamily: 'DMSans_500Medium', maxWidth: '58%', textAlign: 'right' },
+  infoBox: { flexDirection: 'row', gap: 12, padding: 14, borderRadius: 14, borderWidth: 1, alignItems: 'flex-start' },
+  infoTitle: { fontSize: 14, fontFamily: 'DMSans_700Bold', marginBottom: 2 },
+  infoText: { fontSize: 12, fontFamily: 'DMSans_400Regular', lineHeight: 17 },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1 },
+  backBtn: { width: 48, height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  nextBtn: { height: 48, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  nextBtnText: { fontSize: 15, fontWeight: '600', color: '#fff', fontFamily: 'DMSans_700Bold' },
 });

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 
@@ -26,47 +26,15 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontFamily: 'Inter_500Medium',
+          fontFamily: 'DMSans_500Medium',
           marginTop: 2,
         },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="home" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="donations"
-        options={{
-          title: 'Donations',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="heart" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="requests"
-        options={{
-          title: 'Requests',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="hand-left" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <TabIcon name="person" color={color} size={size} />
-          ),
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color, size }) => <TabIcon name="home" color={color} size={size} /> }} />
+      <Tabs.Screen name="donations" options={{ title: 'Donations', tabBarIcon: ({ color, size }) => <TabIcon name="heart" color={color} size={size} /> }} />
+      <Tabs.Screen name="requests" options={{ title: 'Requests', tabBarIcon: ({ color, size }) => <TabIcon name="hand-left" color={color} size={size} /> }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }) => <TabIcon name="person" color={color} size={size} /> }} />
     </Tabs>
   );
 }
