@@ -1,6 +1,6 @@
 # HungerBlock
 
-A Web3 Food Redistribution Platform on Polygon/Ethereum blockchain.
+A Web3 Food Redistribution Platform on Polygon/Ethereum blockchain, with both a web app and a mobile app.
 
 ## Overview
 
@@ -8,17 +8,36 @@ HungerBlock connects surplus food from restaurants and hotels with NGOs who need
 
 ## Project Structure
 
-This is a monorepo with multiple packages:
-
 ```
 packages/
   frontend/     # React + Vite + TailwindCSS frontend (port 5000)
   backend/      # Express + Prisma + PostgreSQL + Redis backend (port 4000)
   contracts/    # Hardhat smart contracts (Solidity)
   ai-service/   # Flask AI food classification service (port 5001)
+
+mobile/         # Expo (React Native) mobile app (port 8080)
 ```
 
-## Architecture
+## Mobile App (Expo)
+
+Located at `mobile/` — an Expo + React Native app with 4 tabs:
+
+- **Home** — Impact stats, quick actions, recent donations feed, urgent request banner
+- **Donations** — Searchable/filterable list of active food donations
+- **Requests** — NGO food requests with urgency-level filtering
+- **Profile** — Wallet connection, achievements, personal stats, settings
+
+Modal screens:
+- **Donate** — 3-step donation flow (select food → details → review)
+- **Request** — Single-step request form with urgency selector
+
+**Design tokens** match the web app: forest green primary (#047A52), orange gradient (#E05D04→#F5891A), Inter font, 12px radius cards.
+
+**Workflow**: `Start Mobile` — `cd mobile && npx expo start --web --port 8080`
+**Preview**: Switch the preview pane to port 8080 to see the web version of the mobile app.
+**Physical device**: Scan the QR code shown in the `Start Mobile` console with the Expo Go app.
+
+## Web Architecture
 
 - **Frontend**: React 18 + Vite + TypeScript + TailwindCSS + shadcn/ui
   - Web3 integration: wagmi + viem + RainbowKit + WalletConnect
@@ -39,33 +58,32 @@ packages/
   - Food classification using Clarifai or OpenAI
   - Freshness score detection
 
-## Development
+## Workflows
 
-### Frontend only (default)
-The workflow `Start application` runs the frontend on port 5000.
-
-### Environment Variables
-Frontend env file at `packages/frontend/.env`:
-- `VITE_WALLETCONNECT_PROJECT_ID` - WalletConnect project ID
-- `VITE_BACKEND_URL` - Backend API URL (default: http://localhost:4000)
-- `VITE_CONTRACT_ADDRESS` - Deployed smart contract address
-- `VITE_CHAIN_ID` - Chain ID (11155111 for Sepolia)
+- `Start application` — Web frontend on port 5000 (webview)
+- `Start Mobile` — Expo mobile app on port 8080 (console, QR code for Expo Go)
 
 ## Key Files
 
+### Web
 - `packages/frontend/src/App.tsx` - Main React app with routing
 - `packages/frontend/src/providers/Web3Provider.tsx` - Web3 wallet configuration
 - `packages/frontend/src/pages/` - Page components
 - `packages/frontend/src/components/` - Reusable UI components
-- `packages/frontend/src/hooks/` - Custom React hooks
-- `packages/frontend/src/lib/api.ts` - API client (axios)
 - `packages/contracts/contracts/HungerBlock.sol` - Main smart contract
-- `packages/backend/src/index.ts` - Backend entry point
-- `packages/backend/prisma/schema.prisma` - Database schema
+
+### Mobile
+- `mobile/app/_layout.tsx` - Root layout with providers
+- `mobile/app/(tabs)/` - Tab screens (index, donations, requests, profile)
+- `mobile/app/donate.tsx` - Donate modal screen
+- `mobile/app/request.tsx` - Request modal screen
+- `mobile/constants/colors.ts` - Design tokens (synced with web CSS)
+- `mobile/constants/mockData.ts` - Mock data (donations, requests, stats)
+- `mobile/components/` - DonationCard, RequestCard, StatCard, ErrorBoundary
 
 ## Notes
 
 - Contract ABI stub is at `packages/contracts/artifacts/contracts/HungerBlock.sol/HungerBlock.json`
-- To use full blockchain functionality, compile contracts with Hardhat and update the artifact
 - Backend requires PostgreSQL and Redis (see docker-compose.yml)
-- Empty source map files in node_modules were patched to prevent build errors
+- Mobile app uses mock data — no backend required to run
+- Mobile can be tested on a physical device via Expo Go (scan QR code from Start Mobile console)
