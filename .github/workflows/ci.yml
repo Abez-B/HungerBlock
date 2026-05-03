@@ -17,13 +17,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install root dependencies
-        run: npm install
+        run: npm install --ignore-scripts
 
       - name: Install frontend dependencies
         working-directory: packages/frontend
-        run: npm install
+        run: npm install --ignore-scripts
 
       - name: Lint frontend
         working-directory: packages/frontend
@@ -43,17 +44,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install contracts dependencies
         working-directory: packages/contracts
-        run: npm install
+        run: npm install --ignore-scripts
 
       - name: Compile contracts
         working-directory: packages/contracts
         run: npx hardhat compile
 
+      - name: Upload contract artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-artifacts
+          path: packages/contracts/artifacts
+          retention-days: 1
+
   backend-build:
     runs-on: ubuntu-latest
+    needs: [contracts-test]
 
     steps:
       - uses: actions/checkout@v4
@@ -62,10 +72,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+
+      - name: Download contract artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: contract-artifacts
+          path: packages/contracts/artifacts
 
       - name: Install backend dependencies
         working-directory: packages/backend
-        run: npm install
+        run: npm install --ignore-scripts
 
       - name: Generate Prisma client
         working-directory: packages/backend
