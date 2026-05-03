@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, Switch, Image,
+  Modal, TextInput, KeyboardAvoidingView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useQueryClient } from '@tanstack/react-query';
 import { useColors } from '@/hooks/useColors';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useWallet } from '@/contexts/WalletContext';
 import { USER_STATS } from '@/constants/mockData';
 
 interface Achievement {
@@ -28,13 +31,50 @@ const ACHIEVEMENTS: Achievement[] = [
   { id: '5', icon: 'flame', title: 'Streak Master', description: '7-day donation streak', earned: false, color: '#C0392B' },
 ];
 
+function isValidEthAddress(addr: string): boolean {
+  return /^0x[0-9a-fA-F]{40}$/.test(addr.trim());
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const { isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const [connected, setConnected] = useState(false);
+  const { connected, walletAddress, connect, disconnect } = useWallet();
+  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [inputAddress, setInputAddress] = useState('');
+  const [addressError, setAddressError] = useState('');
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
+
+  const shortAddress = walletAddress
+    ? walletAddress.slice(0, 6) + '…' + walletAddress.slice(-4)
+    : '';
+
+  function handleConnect() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setInputAddress('');
+    setAddressError('');
+    setShowModal(true);
+  }
+
+  function handleDisconnect() {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    disconnect();
+    queryClient.removeQueries({ queryKey: ['walletTransactions'] });
+  }
+
+  function handleConfirm() {
+    const addr = inputAddress.trim();
+    if (!isValidEthAddress(addr)) {
+      setAddressError('Enter a valid Ethereum address (0x + 40 hex characters)');
+      return;
+    }
+    connect(addr);
+    setShowModal(false);
+    setInputAddress('');
+    setAddressError('');
+  }
 
   return (
     <ScrollView
@@ -42,6 +82,68 @@ export default function ProfileScreen() {
       contentContainerStyle={{ paddingBottom: 40 + (Platform.OS === 'web' ? 34 : 0) }}
       showsVerticalScrollIndicator={false}
     >
+      {/* Wallet address input modal */}
+      <Modal
+        visible={showModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.modalHeader}>
+              <Ionicons name="wallet-outline" size={24} color={colors.primary} />
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Connect Wallet</Text>
+            </View>
+            <Text style={[styles.modalSubtitle, { color: colors.mutedForeground }]}>
+              Enter your Ethereum wallet address to view your on-chain transaction history on Ethereum and Polygon.
+            </Text>
+            <TextInput
+              style={[
+                styles.addressInput,
+                {
+                  backgroundColor: colors.muted,
+                  color: colors.foreground,
+                  borderColor: addressError ? '#C0392B' : colors.border,
+                },
+              ]}
+              placeholder="0x..."
+              placeholderTextColor={colors.mutedForeground}
+              value={inputAddress}
+              onChangeText={text => { setInputAddress(text); setAddressError(''); }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              spellCheck={false}
+              returnKeyType="done"
+              onSubmitEditing={handleConfirm}
+            />
+            {addressError ? (
+              <Text style={styles.inputError}>{addressError}</Text>
+            ) : null}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.muted }]}
+                onPress={() => setShowModal(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1.4 }]}
+                onPress={handleConfirm}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="checkmark" size={16} color="#fff" />
+                <Text style={[styles.modalBtnText, { color: '#fff' }]}>Connect</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Header */}
       <LinearGradient
         colors={isDark ? ['#1A2E1E', '#0F1A12'] : ['#2D5638', '#3D6B4A']}
@@ -74,12 +176,12 @@ export default function ProfileScreen() {
             </View>
             {connected && <View style={styles.connectedDot} />}
           </View>
-          <Text style={styles.walletLabel}>{connected ? '0x1a2b…9c0d' : 'No Wallet Connected'}</Text>
-          <Text style={styles.walletRole}>{connected ? 'Verified Donor · Mumbai' : 'Connect to start donating'}</Text>
+          <Text style={styles.walletLabel}>{connected ? shortAddress : 'No Wallet Connected'}</Text>
+          <Text style={styles.walletRole}>{connected ? 'Ethereum & Polygon' : 'Connect to view your chain history'}</Text>
 
           <TouchableOpacity
             style={[styles.connectBtn, { backgroundColor: connected ? 'rgba(255,255,255,0.15)' : '#fff' }]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setConnected(c => !c); }}
+            onPress={connected ? handleDisconnect : handleConnect}
             activeOpacity={0.85}
           >
             <Ionicons name={connected ? 'wallet' : 'wallet-outline'} size={16} color={connected ? '#fff' : colors.primary} />
@@ -219,6 +321,16 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalCard: { width: '100%', borderRadius: 20, borderWidth: 1, padding: 24, gap: 16 },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  modalTitle: { fontSize: 18, fontFamily: 'DMSans_700Bold' },
+  modalSubtitle: { fontSize: 13, fontFamily: 'DMSans_400Regular', lineHeight: 20 },
+  addressInput: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, fontFamily: 'DMSans_400Regular' },
+  inputError: { fontSize: 12, color: '#C0392B', fontFamily: 'DMSans_400Regular' },
+  modalActions: { flexDirection: 'row', gap: 10 },
+  modalBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 13, borderRadius: 14 },
+  modalBtnText: { fontSize: 15, fontFamily: 'DMSans_700Bold' },
   profileHeader: { paddingHorizontal: 20, paddingBottom: 28, gap: 20 },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },

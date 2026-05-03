@@ -66,3 +66,9 @@ publicDir = "dist"
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 60000
+
+[userenv]
+
+[userenv.shared]
+EXPO_PUBLIC_ETHERSCAN_API_KEY = ""
+EXPO_PUBLIC_POLYGONSCAN_API_KEY = ""

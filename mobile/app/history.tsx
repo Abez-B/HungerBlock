@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Platform,
-  Linking, Image,
+  Linking, Image, ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,7 +10,9 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useTheme } from '@/contexts/ThemeContext';
-import { TRANSACTIONS, ChainTransaction, TxType } from '@/constants/mockData';
+import { useWallet } from '@/contexts/WalletContext';
+import { useWalletTransactions } from '@/hooks/useWalletTransactions';
+import { ChainTransaction, TxType } from '@/constants/mockData';
 
 const TYPE_FILTERS: (TxType | 'All')[] = ['All', 'Donation', 'Token Reward', 'Verification', 'Request'];
 
@@ -125,7 +127,7 @@ function TxCard({ tx }: { tx: ChainTransaction }) {
             <View key={row.label} style={styles.detailRow}>
               <Text style={[styles.detailLabel, { color: colors.mutedForeground }]}>{row.label}</Text>
               <Text
-                style={[styles.detailValue, { color: colors.foreground, fontFamily: row.mono ? 'DMSans_400Regular' : 'DMSans_400Regular' }]}
+                style={[styles.detailValue, { color: colors.foreground }]}
                 numberOfLines={1}
               >
                 {row.value}
@@ -150,17 +152,89 @@ function TxCard({ tx }: { tx: ChainTransaction }) {
   );
 }
 
+function LoadingState() {
+  const colors = useColors();
+  return (
+    <View style={styles.centerState}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={[styles.centerTitle, { color: colors.foreground }]}>Fetching on-chain data…</Text>
+      <Text style={[styles.centerText, { color: colors.mutedForeground }]}>
+        Querying Etherscan & Polygonscan
+      </Text>
+    </View>
+  );
+}
+
+function ErrorState({ message, onRetry, hasApiKey }: { message: string; onRetry: () => void; hasApiKey: boolean }) {
+  const colors = useColors();
+  const needsKey = !hasApiKey || message.toLowerCase().includes('rate') || message.toLowerCase().includes('api key') || message.toLowerCase().includes('notok');
+  return (
+    <View style={styles.centerState}>
+      <Ionicons name="warning-outline" size={48} color="#C0392B" />
+      <Text style={[styles.centerTitle, { color: colors.foreground }]}>
+        {needsKey ? 'API Key Required' : 'Could not load transactions'}
+      </Text>
+      {needsKey ? (
+        <Text style={[styles.centerText, { color: colors.mutedForeground }]}>
+          Set your free Etherscan and Polygonscan API keys as{'\n'}
+          EXPO_PUBLIC_ETHERSCAN_API_KEY and{'\n'}
+          EXPO_PUBLIC_POLYGONSCAN_API_KEY{'\n'}
+          in the Replit Secrets panel to fetch live data.
+        </Text>
+      ) : (
+        <Text style={[styles.centerText, { color: colors.mutedForeground }]}>{message}</Text>
+      )}
+      <TouchableOpacity
+        style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+        onPress={onRetry}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="refresh" size={14} color="#fff" />
+        <Text style={styles.retryBtnText}>Try Again</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+function NoWalletState() {
+  const colors = useColors();
+  return (
+    <View style={styles.centerState}>
+      <Ionicons name="wallet-outline" size={48} color={colors.mutedForeground} />
+      <Text style={[styles.centerTitle, { color: colors.foreground }]}>No Wallet Connected</Text>
+      <Text style={[styles.centerText, { color: colors.mutedForeground }]}>
+        Connect a wallet on the Profile tab to view your on-chain transaction history.
+      </Text>
+      <TouchableOpacity
+        style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+        onPress={() => router.push('/(tabs)/profile')}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="person-outline" size={14} color="#fff" />
+        <Text style={styles.retryBtnText}>Go to Profile</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function HistoryScreen() {
   const colors = useColors();
   const { isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { connected, walletAddress } = useWallet();
   const [filter, setFilter] = useState<TxType | 'All'>('All');
   const topInset = Platform.OS === 'web' ? 67 : insets.top;
 
-  const filtered = filter === 'All' ? TRANSACTIONS : TRANSACTIONS.filter(t => t.type === filter);
+  const { transactions, isLoading, isError, errorMessage, refetch, hasApiKey } =
+    useWalletTransactions(walletAddress, connected);
 
-  const totalHBK = TRANSACTIONS.filter(t => t.status === 'Confirmed').reduce((sum, t) => sum + t.hbkTokens, 0);
-  const confirmedCount = TRANSACTIONS.filter(t => t.status === 'Confirmed').length;
+  const filtered = filter === 'All' ? transactions : transactions.filter(t => t.type === filter);
+  const totalHBK = transactions.filter(t => t.status === 'Confirmed').reduce((sum, t) => sum + t.hbkTokens, 0);
+  const confirmedCount = transactions.filter(t => t.status === 'Confirmed').length;
+
+  const shortAddress = walletAddress
+    ? walletAddress.slice(0, 6) + '…' + walletAddress.slice(-4)
+    : '—';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -180,13 +254,29 @@ export default function HistoryScreen() {
             </View>
             <Text style={styles.headerTitle}>Chain History</Text>
           </View>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity
+            style={styles.refreshBtn}
+            onPress={() => { Haptics.selectionAsync(); refetch(); }}
+            activeOpacity={0.7}
+            disabled={isLoading || !connected}
+          >
+            <Ionicons name="refresh" size={18} color={connected ? '#fff' : 'rgba(255,255,255,0.3)'} />
+          </TouchableOpacity>
         </View>
+
+        {/* Wallet address */}
+        {connected && (
+          <View style={styles.addressRow}>
+            <View style={[styles.connectedDot, { backgroundColor: '#2D7A4A' }]} />
+            <Text style={styles.addressText} numberOfLines={1}>{shortAddress}</Text>
+            {isLoading && <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" style={{ marginLeft: 6 }} />}
+          </View>
+        )}
 
         {/* Stats row */}
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>{TRANSACTIONS.length}</Text>
+            <Text style={styles.statValue}>{transactions.length}</Text>
             <Text style={styles.statLabel}>Transactions</Text>
           </View>
           <View style={[styles.statDivider]} />
@@ -237,41 +327,56 @@ export default function HistoryScreen() {
         />
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={t => t.id}
-        renderItem={({ item }) => <TxCard tx={item} />}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={() => (
-          <View style={styles.empty}>
-            <Ionicons name="cube-outline" size={48} color={colors.mutedForeground} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No transactions found</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Try a different filter</Text>
-          </View>
-        )}
-        ListFooterComponent={() => (
-          <View style={[styles.footer, { borderTopColor: colors.border }]}>
-            <Ionicons name="lock-closed" size={13} color={colors.mutedForeground} />
-            <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
-              All records are immutable and publicly verifiable on-chain
-            </Text>
-          </View>
-        )}
-      />
+      {/* Body */}
+      {!connected ? (
+        <NoWalletState />
+      ) : isLoading && transactions.length === 0 ? (
+        <LoadingState />
+      ) : isError && transactions.length === 0 ? (
+        <ErrorState message={errorMessage ?? 'Unknown error'} onRetry={refetch} hasApiKey={hasApiKey} />
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={t => t.id}
+          renderItem={({ item }) => <TxCard tx={item} />}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View style={styles.empty}>
+              <Ionicons name="cube-outline" size={48} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No transactions found</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Try a different filter</Text>
+            </View>
+          )}
+          ListFooterComponent={
+            transactions.length > 0 ? () => (
+              <View style={[styles.footer, { borderTopColor: colors.border }]}>
+                <Ionicons name="lock-closed" size={13} color={colors.mutedForeground} />
+                <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
+                  All records are immutable and publicly verifiable on-chain
+                </Text>
+              </View>
+            ) : null
+          }
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingBottom: 20, gap: 18 },
+  header: { paddingHorizontal: 20, paddingBottom: 20, gap: 14 },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  refreshBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   logoMini: { width: 28, height: 28, borderRadius: 7, overflow: 'hidden' },
   logoMiniImg: { width: 28, height: 28 },
   headerTitle: { fontSize: 17, fontWeight: '700', color: '#fff', fontFamily: 'DMSans_700Bold' },
+  addressRow: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, alignSelf: 'flex-start' },
+  connectedDot: { width: 7, height: 7, borderRadius: 3.5 },
+  addressText: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontFamily: 'DMSans_500Medium' },
   statsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 14, padding: 14 },
   statItem: { flex: 1, alignItems: 'center', gap: 3 },
   statValue: { fontSize: 22, fontWeight: '700', color: '#fff', fontFamily: 'DMSans_700Bold' },
@@ -308,6 +413,11 @@ const styles = StyleSheet.create({
   detailValue: { fontSize: 12, fontFamily: 'DMSans_400Regular', textAlign: 'right', flex: 1 },
   etherscanBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, paddingVertical: 11, borderRadius: 12, marginTop: 4 },
   etherscanBtnText: { fontSize: 13, fontWeight: '600', color: '#fff', fontFamily: 'DMSans_700Bold' },
+  centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 },
+  centerTitle: { fontSize: 18, fontFamily: 'DMSans_700Bold', textAlign: 'center', marginTop: 8 },
+  centerText: { fontSize: 13, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 20 },
+  retryBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: 8 },
+  retryBtnText: { fontSize: 14, fontWeight: '600', color: '#fff', fontFamily: 'DMSans_700Bold' },
   empty: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 18, fontFamily: 'DMSans_700Bold', marginTop: 8 },
   emptyText: { fontSize: 14, fontFamily: 'DMSans_400Regular' },

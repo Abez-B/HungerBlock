@@ -13,6 +13,7 @@ import {
 } from '@expo-google-fonts/dm-sans';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { WalletProvider } from '@/contexts/WalletContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,11 +55,13 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <ErrorBoundary>
-            <QueryClientProvider client={queryClient}>
-              <AppShell />
-            </QueryClientProvider>
-          </ErrorBoundary>
+          <WalletProvider>
+            <ErrorBoundary>
+              <QueryClientProvider client={queryClient}>
+                <AppShell />
+              </QueryClientProvider>
+            </ErrorBoundary>
+          </WalletProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
