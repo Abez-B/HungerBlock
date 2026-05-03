@@ -60,8 +60,8 @@ externalPort = 8081
 
 [deployment]
 deploymentTarget = "static"
-build = ["bash", "-c", "cd packages/frontend && npx vite build --outDir ../../dist"]
-publicDir = "dist"
+build = ["sh", "-c", "cd packages/frontend && npm install && npm run build"]
+publicDir = "packages/frontend/dist"
 
 [postMerge]
 path = "scripts/post-merge.sh"
